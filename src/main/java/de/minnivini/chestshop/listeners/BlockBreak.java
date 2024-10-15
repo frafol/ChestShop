@@ -13,70 +13,52 @@ import org.bukkit.event.block.BlockBreakEvent;
 public class BlockBreak implements Listener {
 
     @EventHandler
-    public void SignBreak(BlockBreakEvent e) {
+    public void onSignBreak(BlockBreakEvent e) {
+        Block block = e.getBlock();
         Player player = e.getPlayer();
-        if (e.getBlock().getState() instanceof Sign) {
-            int xCoord = e.getBlock().getLocation().getBlockX();
-            int yCoord = e.getBlock().getLocation().getBlockY();
-            int zCoord = e.getBlock().getLocation().getBlockZ();
-            if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) != null) {
-                if (player.hasPermission("chestshop.break")) {
-                    ChestShop.getPlugin(ChestShop.class).removeItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord);
-                    if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) == null) {
-                        player.sendMessage(lang.getMessage("shopRemove"));
-                    } else player.sendMessage(lang.getMessage("shopRemoveErr"));
-                } else if (((Sign) e.getBlock().getState()).getLine(2).equalsIgnoreCase(e.getPlayer().getName())) {
-                    ChestShop.getPlugin(ChestShop.class).removeItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord);
-                    if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) == null) {
-                        player.sendMessage(lang.getMessage("shopRemove"));
-                    } else player.sendMessage(lang.getMessage("shopRemoveErr"));
-                } else {
-                e.setCancelled(true);
-                }
-            }
-        }
+        if (!(block.getState() instanceof Sign)) return;
+        if (ChestShop.getInstance().getItemFromShopConfig(player.getWorld().getName(), block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()) == null) return;
+        removeShopSign(player, block, e);
     }
 
     @EventHandler
-    public void ChestBreak(BlockBreakEvent e) {
+    public void onChestBreak(BlockBreakEvent e) {
+        Block block = e.getBlock();
         Player player = e.getPlayer();
-        String playerName = e.getPlayer().getName();
-        //if (e.getBlock().getType().toString().contains("CHEST")) {
+        Location chestLocation = block.getLocation();
         int[][] directions = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {-1, 0, 0}};
-        Location chestLocation = e.getBlock().getLocation();
+
         for (int[] direction : directions) {
-            int xOffset = direction[0];
-            int yOffset = direction[1];
-            int zOffset = direction[2];
+            Location signLocation = chestLocation.clone().add(direction[0], direction[1], direction[2]);
+            Block signBlock = signLocation.getBlock();
+            if (!(signBlock.getState() instanceof Sign)) continue;
+            Sign sign = (Sign) signBlock.getState();
+            if (!sign.getLine(0).equalsIgnoreCase("§a[Shop]") && !sign.getLine(0).equalsIgnoreCase("§a[Adminshop]")) continue;
+            removeShopSign(player, signBlock, e);
+        }
+    }
 
-            Location currentLocation = new Location(chestLocation.getWorld(), chestLocation.getBlockX() + xOffset, chestLocation.getBlockY() + yOffset, chestLocation.getBlockZ() + zOffset);
-            Block currentBlock = currentLocation.getBlock();
+    private void removeShopSign(Player player, Block block, BlockBreakEvent e) {
+        Sign sign = (Sign) block.getState();
+        String playerName = player.getName();
+        int xCoord = block.getLocation().getBlockX();
+        int yCoord = block.getLocation().getBlockY();
+        int zCoord = block.getLocation().getBlockZ();
+        String worldName = player.getWorld().getName();
 
-            if (currentBlock.getState() instanceof Sign) {
-                Sign sign = (Sign) currentBlock.getState();
-                if (sign.getLine(0).equalsIgnoreCase("§a[Shop]") || sign.getLine(0).equalsIgnoreCase("§a[Adminshop]")) {
-                    if (sign.getLine(2).equalsIgnoreCase(playerName)) {
-                        int xCoord = currentLocation.getBlockX();
-                        int yCoord = currentLocation.getBlockY();
-                        int zCoord = currentLocation.getBlockZ();
-                        if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) != null) {
-                            if (player.hasPermission("chestshop.break")) {
-                                ChestShop.getPlugin(ChestShop.class).removeItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord);
-                                if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) == null) {
-                                    player.sendMessage(lang.getMessage("shopRemove"));
-                                } else {
-                                    e.setCancelled(true);
-                                    player.sendMessage(lang.getMessage("shopRemoveErr"));
-                                }
-                            } else e.setCancelled(true);
-                        }
-                    } else {
-                        e.setCancelled(true);
-                        player.sendMessage(lang.getMessage("noShopBreakPerm"));
-                    }
-                }
-            }
-            //}
+        if (!player.hasPermission("chestshop.break") && !sign.getLine(2).equalsIgnoreCase(playerName)) {
+            e.setCancelled(true);
+            player.sendMessage(lang.getMessage("noShopBreakPerm"));
+            return;
+        }
+
+        ChestShop.getInstance().removeItemFromShopConfig(worldName, xCoord, yCoord, zCoord);
+
+        if (ChestShop.getInstance().getItemFromShopConfig(worldName, xCoord, yCoord, zCoord) == null) {
+            player.sendMessage(lang.getMessage("shopRemove"));
+        } else {
+            e.setCancelled(true);
+            player.sendMessage(lang.getMessage("shopRemoveErr"));
         }
     }
 }

@@ -5,6 +5,8 @@ api-version: '1.19'
 commands:
   chestshop:
     description: Shows all commands
+  shopinfo:
+    description: Shows all information about a shop
 permissions:
   chestshop.shopinfo:
     description: Allows players to run the /cestshop info command

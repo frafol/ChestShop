@@ -1,72 +1,98 @@
 package de.minnivini.chestshop.commands;
 
 import de.minnivini.chestshop.ChestShop;
-import de.minnivini.chestshop.Util.util;
 import de.minnivini.chestshop.Util.lang;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.BlockIterator;
-import java.util.ArrayList;
-import java.util.List;
 
-public class ShopInfo{
-    List<Enchantment> enchantmentList = new ArrayList<>();
-    List<Integer> enchantmentLevelList = new ArrayList<>();
+public class ShopInfo implements CommandExecutor {
 
-    public void shopInfoCMD(CommandSender commandSender) {
-        util util = new util();
+    @Override
+    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
 
         Player player = (Player) commandSender;
-        int maxDiastance = 100;
-        Block block = getTargetBlock(player, maxDiastance);
-        if (block != null && block.getState() instanceof Sign) {
-            int xCoord = block.getLocation().getBlockX();
-            int yCoord = block.getLocation().getBlockY();
-            int zCoord = block.getLocation().getBlockZ();
-            if (ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord) != null) {
-                if (player.hasPermission("chestshop.shopinfo")) {
-                    String item = ChestShop.getPlugin(ChestShop.class).getItemFromShopConfig(player.getWorld().getName(), xCoord, yCoord, zCoord);
-                    player.sendMessage("§dShopinfo:");
-                    player.sendMessage("    §b-Item: §e" + item.toLowerCase());
-                    if (ChestShop.getPlugin(ChestShop.class).IDCheck(item) != null) {
-                        ItemStack itemStack = ChestShop.getPlugin(ChestShop.class).getNBT(item);
-                        if (itemStack.getItemMeta().hasDisplayName()) player.sendMessage("          §b-displayname: §e" + itemStack.getItemMeta().getDisplayName());
-                        if (itemStack.getItemMeta().hasLore()) player.sendMessage("          §b-lore: §e" + itemStack.getItemMeta().getLore());
-                        if (itemStack.getItemMeta().hasEnchants()) {
-                            player.sendMessage("          §b-enchants: \n");
-                            itemStack.getItemMeta().getEnchants().forEach((enchant, level) ->
-                                    player.sendMessage("§e            -" + enchant.getKey().getKey().toLowerCase() + " " + level + "\n"));
-                        }
-                        if (itemStack.getItemMeta().hasLocalizedName()) player.sendMessage("        §bLocelizedname: §e" + itemStack.getItemMeta().getLocalizedName());
-                        if (itemStack.getItemMeta().getItemFlags() != null){
-                            player.sendMessage("         §bItemFlags: \n");
-                            itemStack.getItemMeta().getItemFlags().forEach((itemFlag ->
-                                    player.sendMessage("§e          -" + itemFlag)));
-                        }
-                        if (itemStack.getItemMeta().hasAttributeModifiers()) {
-                            player.sendMessage("§b         Attribute: \n");
-                            itemStack.getItemMeta().getAttributeModifiers().forEach((attribute, attributeModifier) ->
-                                    player.sendMessage("§b          -" + attribute + " " + attributeModifier));
-                        }
-                    }
-                } else player.sendMessage(lang.getMessage("noPermission"));
-            } else player.sendMessage(lang.getMessage("lookatSign"));
-        } else player.sendMessage(lang.getMessage("lookatSign"));
+        int maxDistance = 100;
+        Block block = getTargetBlock(player, maxDistance);
+        if (block == null || !(block.getState() instanceof Sign)) {
+            player.sendMessage(lang.getMessage("lookatSign"));
+            return false;
+        }
+
+        int xCoord = block.getLocation().getBlockX();
+        int yCoord = block.getLocation().getBlockY();
+        int zCoord = block.getLocation().getBlockZ();
+        String worldName = player.getWorld().getName();
+
+        // Controlla se esiste un negozio nel blocco specificato
+        String item = ChestShop.getInstance().getItemFromShopConfig(worldName, xCoord, yCoord, zCoord);
+        if (item == null) {
+            player.sendMessage(lang.getMessage("lookatSign"));
+            return false;
+        }
+
+        if (!player.hasPermission("chestshop.shopinfo")) {
+            player.sendMessage(lang.getMessage("noPermission"));
+            return false;
+        }
+
+        player.sendMessage("§dShopinfo:");
+        player.sendMessage("    §b-Item: §e" + item.toLowerCase());
+
+        ItemStack itemStack = ChestShop.getInstance().getNBT(item);
+        ItemMeta meta = itemStack.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        if (meta.hasDisplayName()) {
+            player.sendMessage("    §b-displayname: §e" + meta.getDisplayName());
+        }
+
+        if (meta.hasLore()) {
+            player.sendMessage("    §b-lore: §e" + meta.getLore());
+        }
+
+        if (meta.hasEnchants()) {
+            player.sendMessage("    §b-enchants:");
+            meta.getEnchants().forEach((enchant, level) ->
+                    player.sendMessage("        §e-" + enchant.getKey().getKey().toLowerCase() + " " + level));
+        }
+
+        if (meta.hasLocalizedName()) {
+            player.sendMessage("    §b-localizedname: §e" + meta.getLocalizedName());
+        }
+
+        if (meta.getItemFlags() != null && !meta.getItemFlags().isEmpty()) {
+            player.sendMessage("    §b-itemFlags:");
+            meta.getItemFlags().forEach(flag ->
+                    player.sendMessage("        §e-" + flag.name()));
+        }
+
+        if (meta.hasAttributeModifiers()) {
+            player.sendMessage("    §b-attributes:");
+            meta.getAttributeModifiers().forEach((attribute, modifier) ->
+                    player.sendMessage("        §e-" + attribute.getKey().getKey() + " " + modifier));
+        }
+
+        return false;
     }
+
     public Block getTargetBlock(Player player, int maxDistance) {
         BlockIterator iterator = new BlockIterator(player, maxDistance);
-
         while (iterator.hasNext()) {
             Block block = iterator.next();
             if (!block.getType().isAir()) {
                 return block;
             }
         }
-        return null; // Wenn kein Block gefunden wird
+        return null;
     }
-
 }

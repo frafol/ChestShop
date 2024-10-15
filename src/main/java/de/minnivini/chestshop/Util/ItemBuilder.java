@@ -9,28 +9,35 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Arrays;
 
 public class ItemBuilder {
-    private ItemMeta itemMeta;
-    private ItemStack itemStack;
+
+    private final ItemMeta itemMeta;
+    private final ItemStack itemStack;
+
     public ItemBuilder(Material mat){
         itemStack = new ItemStack(mat);
         itemMeta = itemStack.getItemMeta();
     }
+
     public ItemBuilder setDisplayname(String s){
         itemMeta.setDisplayName(s);
         return this;
     }
+
     public ItemBuilder setLocalizedName(String s){
         itemMeta.setLocalizedName(s);
         return this;
     }
+
     public ItemBuilder setLore(String... s){
         itemMeta.setLore(Arrays.asList(s));
         return this;
     }
+
     public ItemBuilder setUnbreakable(boolean s){
         itemMeta.setUnbreakable(s);
         return this;
     }
+
     public ItemBuilder addItemFlags(ItemFlag... s){
         itemMeta.addItemFlags(s);
         return this;
@@ -43,6 +50,7 @@ public class ItemBuilder {
                 ", itemStack=" + itemStack +
                 '}';
     }
+
     public ItemStack build(){
         itemStack.setItemMeta(itemMeta);
         return itemStack;

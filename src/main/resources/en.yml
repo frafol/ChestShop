@@ -14,6 +14,7 @@
 "noShoptoRem": "No entry in the configuration file for the coordinates: "
 "noPermission": "§4You are not allowed to do that!"
 "noArr": "§4Please enter an available argument"
+"invalidPrice": "§cInvalid price!"
 "ErrorOccurred": "§4An error has occurred"
 "FalseWorld": "§4You cant build shops in this region"
 "noShop": "§cNo store found for the item! "

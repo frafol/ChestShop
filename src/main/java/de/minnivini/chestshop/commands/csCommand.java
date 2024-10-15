@@ -2,18 +2,10 @@ package de.minnivini.chestshop.commands;
 
 import de.minnivini.chestshop.GUIs.InfoGUI;
 import de.minnivini.chestshop.Util.lang;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 public class csCommand implements CommandExecutor {
 
@@ -21,25 +13,36 @@ public class csCommand implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
         InfoGUI InfoGUI = new InfoGUI();
         search search = new search();
-        Player player = (Player) commandSender;
+
         if (!(commandSender instanceof Player)) {
-            commandSender.sendMessage(Objects.requireNonNull(lang.getMessage("PlayerOnly")));
+            commandSender.sendMessage(lang.getMessage("PlayerOnly"));
             return true;
-        } else {
-            if (args.length > 0) {
-                if (args[0].equalsIgnoreCase("info")) {
-                    InfoGUI.InfoGUI(commandSender);
-                } else if (args[0].equalsIgnoreCase("search") && player.hasPermission("chestshop.search")) {
-                    if (args.length > 1) {
-                        String material = args[1].toUpperCase();
-                        search.search(material, player);
-                    } else {
-                        player.sendMessage(lang.getMessage("noArr"));
-                    }
-                } else player.sendMessage(lang.getMessage("noArr"));
-            } else player.sendMessage(lang.getMessage("noArr"));
         }
+
+        Player player = (Player) commandSender;
+        if (args.length == 0) {
+            player.sendMessage(lang.getMessage("noArr"));
+            return false;
+        }
+
+        if (args[0].equalsIgnoreCase("info")) {
+            InfoGUI.InfoGUI(commandSender);
+            return false;
+        }
+
+        if (!args[0].equalsIgnoreCase("search") || !player.hasPermission("chestshop.search")) {
+            player.sendMessage(lang.getMessage("noArr"));
+            return false;
+        }
+
+        if (args.length > 1) {
+            String material = args[1].toUpperCase();
+            search.search(material, player);
+            return false;
+        }
+
+        player.sendMessage(lang.getMessage("noArr"));
         return false;
     }
-
 }
+

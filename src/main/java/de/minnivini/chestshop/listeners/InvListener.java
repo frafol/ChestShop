@@ -1,6 +1,5 @@
 package de.minnivini.chestshop.listeners;
 
-import de.minnivini.chestshop.ChestShop;
 import de.minnivini.chestshop.Util.lang;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -8,44 +7,59 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.List;
 
 public class InvListener implements Listener {
     @EventHandler
     public void onInvClick(InventoryClickEvent e) {
+
+        if (e.getCurrentItem() == null) return;
         Player p = (Player) e.getWhoClicked();
-        if (e.getCurrentItem() != null) {
-            if (e.getView().getTitle().equals("§bShop Search")) {
-                e.setCancelled(true);
-                if (e.getCurrentItem().getItemMeta().hasLocalizedName()) {
-                    switch (e.getCurrentItem().getItemMeta().getLocalizedName()) {
-                        case "shopTP":
-                            String koords = e.getCurrentItem().getItemMeta().getDisplayName();
-                            String world = String.valueOf(e.getCurrentItem().getItemMeta().getLore());
-                            String formatetWorld = world.substring(1, world.length() - 1);
-                            String[] parts = koords.split(" ");
-                            Double x = null;
-                            Double y = null;
-                            Double z = null;
-                            x = Double.valueOf(parts[0]);
-                            y = Double.valueOf(parts[1]);
-                            z = Double.valueOf(parts[2]);
-                            if (z != null) {
-                                if (p.hasPermission("chestshop.tp")){
-                                    p.closeInventory();
-                                    //int Cooldown = ChestShop.getPlugin(ChestShop.class).getCooldown();
-                                    p.teleport(new Location(Bukkit.getWorld(formatetWorld), x, y, z));
-                                } else {
-                                    p.sendMessage(lang.getMessage("noPermission"));
-                                }
-                            } else {
-                                p.sendMessage("Shittt!");
-                            }
-                            break;
-                    }
+        String title = e.getView().getTitle();
+
+        if (title.equals("§bShop Search")) {
+            e.setCancelled(true);
+            ItemMeta itemMeta = e.getCurrentItem().getItemMeta();
+            if (itemMeta == null || !itemMeta.hasLocalizedName()) return;
+            if ("shopTP".equals(itemMeta.getLocalizedName())) {
+                String koords = itemMeta.getDisplayName();
+                List<String> lore = itemMeta.getLore();
+                if (lore == null || lore.isEmpty()) {
+                    p.sendMessage("Invalid world information.");
+                    return;
                 }
-            } else if (e.getView().getTitle().equals("§bShop Info")) {
-                e.setCancelled(true);
+
+                String formattedWorld = lore.get(0);
+                String[] parts = koords.split(" ");
+
+                if (parts.length < 3) {
+                    p.sendMessage("Invalid coordinates.");
+                    return;
+                }
+
+                try {
+                    double x = Double.parseDouble(parts[0]);
+                    double y = Double.parseDouble(parts[1]);
+                    double z = Double.parseDouble(parts[2]);
+
+                    if (p.hasPermission("chestshop.tp")) {
+                        p.closeInventory();
+                        Location tpLocation = new Location(Bukkit.getWorld(formattedWorld), x, y, z);
+                        p.teleport(tpLocation);
+                    } else {
+                        p.sendMessage(lang.getMessage("noPermission"));
+                    }
+                } catch (NumberFormatException ex) {
+                    p.sendMessage("Invalid coordinates format.");
+                }
             }
+            return;
+        }
+
+        if (title.equals("§bShop Info")) {
+            e.setCancelled(true);
         }
     }
 }

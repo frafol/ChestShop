@@ -10,8 +10,8 @@ import java.nio.file.Files;
 
 public class lang {
     public static String getMessage(String message){
-        File languageFolder = new File(ChestShop.getPlugin(ChestShop.class).getDataFolder() + "/locales");
-        String language = ChestShop.getPlugin(ChestShop.class).getLanguage();
+        File languageFolder = new File(ChestShop.getInstance().getDataFolder() + "/locales");
+        String language = ChestShop.getInstance().getLanguage();
         File langFile = new File(languageFolder, language + ".yml");
         if (!langFile.exists()) {
             return null;
@@ -20,24 +20,15 @@ public class lang {
         return langConfig.getString(message);
     }
     public static void createLanguageFolder() {
-        File langFolder = new File(ChestShop.getPlugin(ChestShop.class).getDataFolder() + "/locales");
+        File langFolder = new File(ChestShop.getInstance().getDataFolder() + "/locales");
         if (!langFolder.exists()) {
             langFolder.mkdir();
         }
         File enFile = new File(langFolder, "en.yml");
-        File deFile = new File(langFolder, "de.yml");
         try {
             if (!enFile.exists()) {
-                InputStream in = ChestShop.getPlugin(ChestShop.class).getResource("en.yml");
+                InputStream in = ChestShop.getInstance().getResource("en.yml");
                 Files.copy(in, enFile.toPath());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            if (!deFile.exists()) {
-                InputStream in = ChestShop.getPlugin(ChestShop.class).getResource("de.yml");
-                Files.copy(in, deFile.toPath());
             }
         } catch (IOException e) {
             e.printStackTrace();
